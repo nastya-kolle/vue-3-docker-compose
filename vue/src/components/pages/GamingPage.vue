@@ -19,8 +19,9 @@
         <label>Field Size (нечетное число):</label>
 
         <div class="game__fieldSize">
-        <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
-        <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
+          <input v-model="value" type="number" step="2" min="1" class="game__fieldSize--input">
+          <button class="game__fieldSize--btn" @click="() => incFieldSize()" >Применить</button>
+          <FigureEditor/>
         </div>
       </div>
 
@@ -46,31 +47,31 @@
 
         <div class="game__arrow">
           <button class="game__arrow--btn" @click="() => moveIsland('up')">
-            <img :src="upArrow" class="game__arrow--icon">
+            <img src="/icons/icons8-up-arrow-80.png" class="game__arrow--icon">
           </button>
 
           <div class="game__arrow--row">
             <button class="game__arrow--btn" @click="() => moveIsland('left')">
-              <img :src="leftArrow" class="game__arrow--icon">
+              <img src="/icons/icons8-left-arrow-80.png" class="game__arrow--icon">
             </button>
 
             <button class="game__arrow--btn" @click="() => moveIsland('right')" >
-              <img :src="rightArrow" class="game__arrow--icon">
+              <img src="/icons/icons8-right-arrow-80.png" class="game__arrow--icon">
             </button>  
           </div>
 
           <button class="game__arrow--btn" @click="() => moveIsland('down')" >
-            <img :src="downArrow" class="game__arrow--icon">
+            <img src="/icons/icons8-down-arrow-80.png" class="game__arrow--icon">
           </button>
         </div>
 
         <div class="game__rotateArrow">
           <button class="game__rotateArrow--btn" @click="() => rotateIsland('counterclockwise')">
-            <img :src="clockwiseArrow" class="game__rotateArrow--icon">
+            <img src="/icons/icons8-curved-arrow-down-80.png" class="game__arrow--icon">
           </button>
 
           <button class="game__rotateArrow--btn" @click="() => rotateIsland('clockwise')" >
-            <img :src="counterwiseArrow" class="game__rotateArrow--icon">
+            <img src="/icons/icons8-curved-arrow-downward-80.png" class="game__arrow--icon">
           </button>
         </div>
 
@@ -79,28 +80,27 @@
           <div class="game__speedArrow">
             <button class="game__speedArrow--btn" :class="{'accelerated': isAccelerated}" @click="() => accelerateFigures()" >
               {{ isAccelerated ? 'Турбо ВКЛ': 'Ускорить фигуры' }}
-              <img :src="speedArrow" class="game__speedArrow--icon">
+              <img src="/icons/icons8-speed-80.png" class="game__speedArrow--icon">
             </button>
           </div>
 
           <div class="game__speedArrow">
             <button class="game__speedArrow--btn" :class="{'accelerated': isSpeedModeActive}" @click="() => toggleSpeedMode()">
               {{ isSpeedModeActive ? 'Разгон ВКЛ' : 'Режим разгона' }}
-              <img :src="speedArrow" class="game__speedArrow--icon">
+              <img src="/icons/icons8-speed-80.png" class="game__speedArrow--icon">
             </button>
           </div>
 
           <div class="game__bomb">
             <button class="game__bomb--btn" :class="{'accelerated': isBombModeActive}" @click="() => toggleBombMode()">
               {{ isBombModeActive ? 'Бомбы ВКЛ' : 'Режим бомб' }}
-              <img :src="blackBomb" class="game__bomb--icon">
+              <img src="/icons/icons8-bomb-80(1).png" class="game__bomb--icon">
             </button>
           </div>
 
         </div>
-
-
       </div>
+
     </div>
 
   </div>
@@ -110,22 +110,14 @@
 
 import { mapGetters, mapActions } from 'vuex'
 import PlayingField from '../ui/PlayingField.vue'
+import FigureEditor from '../ui/FigureEditor.vue'
 
-import upArrow from '@/components/icons/icons8-up-arrow-80.png'
-import downArrow from '@/components/icons/icons8-down-arrow-80.png'
-import leftArrow from '@/components/icons/icons8-left-arrow-80.png'
-import rightArrow from '@/components/icons/icons8-right-arrow-80.png'
-import clockwiseArrow from '@/components/icons/icons8-curved-arrow-down-80.png'
-import counterwiseArrow from'@/components/icons/icons8-curved-arrow-downward-80.png'
-import speedArrow from '@/components/icons/icons8-speed-80.png'
-import redBomb from '@/components/icons/icons8-bomb-80.png'
-import blackBomb from '@/components/icons/icons8-bomb-80(1).png'
-import greenBomb from '@/components/icons/icons8-bomb-80(2).png'
-
+const DEFAULT_FIGURE_COLOR = '#ff4444'
 export default{
   name: 'GamingPage',
   components:{
-    PlayingField
+    PlayingField,
+    FigureEditor
   },
   data(){
     const initialFieldSize = 11
@@ -138,13 +130,6 @@ export default{
         col: Math.floor(initialFieldSize / 2)
       }],
       corePosition: {row: 0, col: 0},
-      upArrow,
-      downArrow,
-      leftArrow,
-      rightArrow,
-      clockwiseArrow,
-      counterwiseArrow,
-      speedArrow,
       moveInterval: null as ReturnType<typeof setInterval> | null,
       spawnInterval: null as ReturnType<typeof setInterval> | null,
       gameOver: false,
@@ -158,9 +143,6 @@ export default{
       isSpeedModeActive: false,
       isBombModeActive: false,
       bombSpawnInterval: null as ReturnType<typeof setInterval> | null,
-      blackBomb,
-      greenBomb,
-      redBomb
     }
   },
   computed:{
@@ -175,10 +157,12 @@ export default{
       'getBombs',
       'getBombsCount',
     ]),
-    ...mapGetters({
-      count: 'getCount',
-      list: 'list/getList'
-    })
+    ...mapGetters( 'figureShapes',[
+      'getActiveShape'
+    ]),
+    activeShapeColor(){
+      return this.getActiveShape?.color ?? DEFAULT_FIGURE_COLOR
+    },
   },
   mounted(){
     console.log('GamingPage MOUNTED')
@@ -212,10 +196,6 @@ export default{
       'moveBombs',
       'checkBombCollisions',
     ]),
-    ...mapActions([
-      'runIncrement',
-      'setCount'
-    ]),
     startGame(){
       this.stopGame()
       console.log('=== START GAME ===')
@@ -234,7 +214,11 @@ export default{
       const vm = this
       this.spawnInterval = setInterval(() => {
         console.log('SPAWN TICK')
-        vm.spawnFigure({fieldSize: vm.fieldSize})
+        vm.spawnFigure({
+          fieldSize: vm.fieldSize, 
+          color: vm.activeShapeColor,
+          shapeCells: this.getActiveShape?.cells ?? null,
+        })
       }, 2000)
       this.moveInterval = setInterval( () => {
         this.gameTick()
@@ -266,14 +250,15 @@ export default{
     },
     gameTick() {
       console.log('--- GAME TICK --- figures:', this.getFiguresCount)
-      this.checkCollisions({ islandPosition: this.islandPosition })
+      const islandSnapshot = [...this.islandPosition]
+      this.checkCollisions({ islandPosition: islandSnapshot })
         .then(added1 => {
           return this.moveFigures({ fieldSize: this.fieldSize })
           .then(() => this.moveBombs({fieldSize: this.fieldSize}))
           .then(() => added1)
         })
         .then(added1 => {
-          return this.checkCollisions({ islandPosition: this.islandPosition })
+          return this.checkCollisions({ islandPosition: islandSnapshot })
           .then(added2 => [...added1, ...added2])
         })
         .then(allNewCells => {
@@ -368,15 +353,6 @@ export default{
       this.resetGame()
       this.startGame()
     },
-    inc(){
-      this.runIncrement(this.value)
-    },
-    setValue(){
-      this.setCount({
-        value: this.value,
-        timeout: this.value
-      })
-    },
     incFieldSize() {
       this.fieldSize = this.value
       const center = Math.floor(this.fieldSize / 2)
@@ -390,26 +366,27 @@ export default{
       const centerRow = this.corePosition.row;
       const centerCol = this.corePosition.col;
 
-      const newPositions = this.islandPosition.map(cell =>{
-      const relRow = cell.row - centerRow;
-      const relCol = cell.col - centerCol;
+      const newPositions = this.islandPosition.map((cell: {row: number; col: number; color?: string}) =>{
+        const relRow = cell.row - centerRow;
+        const relCol = cell.col - centerCol;
 
-      let newRelRow, newRelCol;
-      if (direction === 'clockwise'){
-        newRelRow = relCol;
-        newRelCol = -relRow;
-      }
-      else{
-        newRelRow = -relCol;
-        newRelCol = relRow;
-      }
-      const newRow = newRelRow + centerRow;
-      const newCol = newRelCol + centerCol;
+        let newRelRow, newRelCol;
+        if (direction === 'clockwise'){
+          newRelRow = relCol;
+          newRelCol = -relRow;
+        }
+        else{
+          newRelRow = -relCol;
+          newRelCol = relRow;
+        }
+        const newRow = newRelRow + centerRow;
+        const newCol = newRelCol + centerCol;
 
-      return{
-        row: Math.max(0, Math.min(this.fieldSize - 1, newRow)),
-        col: Math.max(0, Math.min(this.fieldSize - 1, newCol))
-      }
+        return{
+          row: Math.max(0, Math.min(this.fieldSize - 1, newRow)),
+          col: Math.max(0, Math.min(this.fieldSize - 1, newCol)),
+          color: cell.color,
+        }
       })
       this.islandPosition = newPositions;
       console.log(`Остров повернут ${direction === 'clockwise' ? 'по часовой':'против часовой'}`)
@@ -453,9 +430,10 @@ export default{
         right: {row: 0, col: 1}
       }[direction]
       if (!delta) return;
-      const newCells = this.islandPosition.map(cell => ({
+      const newCells = this.islandPosition.map((cell: {row: number; col: number; color?: string}) => ({
         row: Math.min(this.fieldSize - 1, Math.max(0, cell.row + delta.row)),
         col: Math.min(this.fieldSize - 1, Math.max(0, cell.col + delta.col)),
+        color: cell.color,
       }))
       this.corePosition = {
         row: Math.min(this.fieldSize - 1, Math.max(0, this.corePosition.row + delta.row)),
@@ -506,12 +484,9 @@ export default{
         console.log('Режим бомб ВЫКЛЮЧЕН')
       }
     },
-
-
   }
 }
 </script>
-
 <style scoped lang="scss">
 .gameOver{
   position: absolute;
